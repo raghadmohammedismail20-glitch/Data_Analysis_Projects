@@ -1,0 +1,115 @@
+SELECT * 
+FROM vgsales_2;
+
+SELECT * FROM vgsales_2
+ORDER BY NA_Sales DESC
+LIMIT 5;
+
+SELECT * FROM vgsales_2
+ORDER BY EU_Sales DESC
+LIMIT 5;
+
+SELECT * FROM vgsales_2
+ORDER BY JP_Sales DESC
+LIMIT 5;
+
+SELECT * FROM vgsales_2
+ORDER BY Other_Sales DESC
+LIMIT 5;
+
+SELECT * FROM vgsales_2
+ORDER BY Global_Sales DESC
+LIMIT 5;
+
+
+
+
+
+
+
+
+SELECT *
+FROM vgsales_2; 
+
+WITH highest_publisher AS 
+(SELECT name,year,Genre,publisher,Platform,SUM(NA_Sales+JP_Sales+EU_Sales+Global_Sales+Other_Sales)  AS total_sales
+,ROUND(SUM(NA_Sales+JP_Sales+EU_Sales+Global_Sales+Other_Sales) ,0) AS round_total_sales
+FROM vgsales_2
+GROUP BY name,year,Genre,publisher,Platform
+ORDER BY total_sales DESC )
+SELECT *
+,ROW_NUMBER() OVER (PARTITION BY publisher ORDER BY total_sales DESC) AS rank_id
+FROM highest_publisher;
+
+
+
+
+
+
+
+#Top 10 Global Performers
+
+SELECT name,year,platform,global_sales
+FROM vgsales_2
+ORDER BY global_sales DESC
+LIMIT 10;
+
+#Genre Popularity
+
+SELECT GENRE, COUNT(*) AS total
+FROM vgsales_2
+GROUP BY genre
+ORDER BY total DESC;
+
+#The "Golden Age" of Publishers
+
+SELECT publisher,SUM(global_sales) AS total_global_sales 
+FROM vgsales_2
+WHERE year BETWEEN 2000 AND 2010
+GROUP BY publisher
+ORDER BY total_global_sales DESC;
+
+#Regional Preferences
+
+SELECT genre,SUM(jp_sales),SUM(na_sales)
+FROM vgsales_2
+GROUP BY genre;
+;
+
+
+#. Year-over-Year (YoY) Sales Growth
+
+WITH YOY_SALES AS
+(SELECT genre,year,SUM(global_sales) AS total_sales
+FROM vgsales_2
+GROUP BY genre,year)
+SELECT genre,year,total_sales,
+LAG(total_sales) OVER (PARTITION BY genre ORDER BY year ) AS prv_year,
+total_sales-LAG(total_sales) OVER (PARTITION BY genre ORDER BY year ) AS YOY_sales
+FROM YOY_SALES
+ORDER BY genre,year;
+
+#Platform Market Share (The Yearly Winner)
+
+WITH highest_global_sales AS
+(SELECT platform,year,SUM(global_sales) AS total_sales
+FROM vgsales_2
+GROUP BY platform, year) , highest_global_sales2 AS
+(SELECT year,platform,total_sales,
+ROW_NUMBER() OVER(PARTITION BY year ORDER BY total_sales DESC) AS rank_id
+FROM highest_global_sales)
+SELECT *
+FROM highest_global_sales2
+WHERE rank_id=1 ;
+
+
+WITH highest_sales AS 
+(SELECT platform,SUM(global_sales) AS accumlated_sales,genre
+FROM vgsales_2
+GROUP BY platform,genre),highest_sales1 AS
+(SELECT genre,platform,accumlated_sales,
+row_number() OVER (PARTITION BY genre ORDER BY accumlated_sales DESC) AS rank_id
+FROM highest_sales)
+SELECT *
+FROM highest_sales1
+WHERE rank_id=1;
