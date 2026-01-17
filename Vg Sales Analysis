@@ -1,0 +1,92 @@
+SELECT * FROM vgsales_1;
+
+CREATE TABLE videosales
+LIKE vgsales_1;
+
+INSERT videosales
+SELECT * FROM vgsales_1;
+
+SELECT * FROM videosales;
+
+
+
+SELECT * ,
+ROW_NUMBER() OVER (
+PARTITION BY Name, Platform, Year, Genre, Publisher, NA_Sales, EU_Sales, JP_Sales, Other_Sales, Global_Sales) AS row_num
+ FROM videosales ;
+
+
+WITH duplicate_cte AS(
+SELECT * ,
+ROW_NUMBER() OVER (
+PARTITION BY Name, Platform, Year, Genre, Publisher, NA_Sales, EU_Sales, JP_Sales, Other_Sales, Global_Sales) AS row_num
+ FROM videosales)
+ SELECT * 
+ FROM duplicate_cte
+ WHERE row_num>1
+ ;
+ 
+ SELECT * FROM videosales
+ WHERE name = '.hack: Sekai no Mukou ni + Versus';
+ 
+ 
+ WITH duplicate_cte AS(
+SELECT * ,
+ROW_NUMBER() OVER (
+PARTITION BY Name, Platform, Year, Genre, Publisher, NA_Sales, EU_Sales, JP_Sales, Other_Sales, Global_Sales) AS row_num
+ FROM videosales)
+ DELETE
+ FROM duplicate_cte
+ WHERE row_num>1
+ ;
+ 
+ 
+ CREATE TABLE `vgsales_2` (
+  `Rank` int DEFAULT NULL,
+  `Name` text,
+  `Platform` text,
+  `Year` int DEFAULT NULL,
+  `Genre` text,
+  `Publisher` text,
+  `NA_Sales` double DEFAULT NULL,
+  `EU_Sales` double DEFAULT NULL,
+  `JP_Sales` double DEFAULT NULL,
+  `Other_Sales` double DEFAULT NULL,
+  `Global_Sales` double DEFAULT NULL,
+  `row_num` INT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+
+INSERT INTO vgsales_2
+SELECT * ,
+rOW_NUMBER() OVER (
+PARTITION BY videosales.Rank, Name, Platform, Year, Genre, Publisher, NA_Sales, EU_Sales, JP_Sales, Other_Sales, Global_Sales) AS row_num
+ FROM videosales;
+ 
+ SELECT * FROM  vgsales_2;
+ 
+ 
+ DELETE
+ FROM vgsales_2
+ WHERE row_num>1
+ ;
+ 
+ SELECT * 
+ FROM vgsales_2
+;
+
+DELETE
+FROM vgsales_2
+WHERE publisher = "N/A" or publisher="unknown"
+;
+
+SELECT *
+FROM vgsales_2
+WHERE  publisher = "Atari" AND year=1982
+  ;
+  
+  ALTER TABLE vgsales_2
+  DROP COLUMN vgsales_2row_num;
+  
+  
+  
